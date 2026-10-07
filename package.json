@@ -1,0 +1,16 @@
+{
+  "name": "voltaris-status-site",
+  "version": "1.0.0",
+  "description": "Site de status/estatísticas do bot Voltaris Store.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
