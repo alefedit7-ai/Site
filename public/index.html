@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Voltaris Store — Status do Bot</title>
+<style>
+  :root { --bg:#0f1115; --card:#181b22; --accent:#c9a227; --green:#2ecc71; --red:#e74c3c; --text:#e8e8e8; --muted:#9aa0ab; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Segoe UI', Roboto, sans-serif; background:var(--bg); color:var(--text); padding:24px 16px 60px; }
+  .wrap { max-width:720px; margin:0 auto; }
+  h1 { font-size:1.4rem; margin-bottom:4px; }
+  .sub { color:var(--muted); margin-bottom:24px; font-size:.9rem; }
+  .status { display:inline-flex; align-items:center; gap:8px; font-weight:600; }
+  .dot { width:10px; height:10px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); }
+  .dot.off { background:var(--red); box-shadow:0 0 8px var(--red); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:12px; margin:20px 0; }
+  .card { background:var(--card); border-radius:14px; padding:16px; border:1px solid #262b35; }
+  .card .num { font-size:1.6rem; font-weight:700; color:var(--accent); }
+  .card .label { color:var(--muted); font-size:.8rem; margin-top:4px; }
+  .section { margin-top:28px; }
+  .section h2 { font-size:1rem; color:var(--accent); margin-bottom:10px; }
+  .row { display:flex; justify-content:space-between; padding:10px 14px; background:var(--card); border-radius:10px; margin-bottom:6px; border:1px solid #262b35; font-size:.9rem; }
+  .row .pos { color:var(--accent); font-weight:700; margin-right:8px; }
+  .empty { color:var(--muted); font-size:.85rem; padding:10px 0; }
+  footer { text-align:center; color:var(--muted); font-size:.75rem; margin-top:36px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🛍️ Voltaris Store</h1>
+  <div class="sub">Painel de status do bot — atualiza a cada 15s</div>
+  <div class="status"><span id="dot" class="dot"></span> <span id="statusTexto">Carregando...</span></div>
+
+  <div class="grid">
+    <div class="card"><div class="num" id="ticketsAbertos">—</div><div class="label">Tickets abertos</div></div>
+    <div class="card"><div class="num" id="ticketsTotal">—</div><div class="label">Tickets no total</div></div>
+    <div class="card"><div class="num" id="servidores">—</div><div class="label">Servidores</div></div>
+    <div class="card"><div class="num" id="uptime">—</div><div class="label">Uptime</div></div>
+  </div>
+
+  <div class="section">
+    <h2>🏆 Ranking do Quiz</h2>
+    <div id="quizRanking"></div>
+  </div>
+
+  <div class="section">
+    <h2>⚡ Ranking de Reação Rápida</h2>
+    <div id="reacaoRanking"></div>
+  </div>
+
+  <footer id="atualizadoEm"></footer>
+</div>
+
+<script>
+  async function atualizar() {
+    try {
+      const res = await fetch('/api/stats');
+      const d = await res.json();
+
+      if (!d.atualizadoEm) {
+        document.getElementById('statusTexto').textContent = 'Aguardando o bot enviar dados...';
+        return;
+      }
+
+      document.getElementById('dot').className = 'dot' + (d.online ? '' : ' off');
+      document.getElementById('statusTexto').textContent = d.online ? (d.botTag + ' — Online') : 'Offline';
+      document.getElementById('ticketsAbertos').textContent = d.tickets.abertos;
+      document.getElementById('ticketsTotal').textContent = d.tickets.total;
+      document.getElementById('servidores').textContent = d.servidores;
+      document.getElementById('uptime').textContent = formatarUptime(d.uptimeMs);
+
+      const medalhas = ['🥇','🥈','🥉'];
+      const quizEl = document.getElementById('quizRanking');
+      quizEl.innerHTML = d.quizRanking.length
+        ? d.quizRanking.map((j,i) => `<div class="row"><span><span class="pos">${medalhas[i]||(i+1)+'.'}</span>${j.userTag}</span><span>${j.pontos} pts</span></div>`).join('')
+        : '<div class="empty">Ninguém jogou ainda.</div>';
+
+      const reacaoEl = document.getElementById('reacaoRanking');
+      reacaoEl.innerHTML = d.reacaoRanking.length
+        ? d.reacaoRanking.map((j,i) => `<div class="row"><span><span class="pos">${medalhas[i]||(i+1)+'.'}</span>${j.userTag}</span><span>${j.melhorTempo}ms</span></div>`).join('')
+        : '<div class="empty">Ninguém jogou ainda.</div>';
+
+      document.getElementById('atualizadoEm').textContent = 'Atualizado às ' + new Date(d.atualizadoEm).toLocaleTimeString('pt-BR');
+    } catch (e) {
+      document.getElementById('statusTexto').textContent = 'Erro ao carregar dados';
+    }
+  }
+  function formatarUptime(ms) {
+    const s = Math.floor(ms/1000), h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
+    return h + 'h ' + m + 'm';
+  }
+  atualizar();
+  setInterval(atualizar, 15000);
+</script>
+</body>
+</html>
